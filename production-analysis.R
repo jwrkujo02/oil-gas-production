@@ -4,6 +4,10 @@
 library(readr) # built in reading packages aren't perfect.
 library(dplyr)
 library(lubridate)
+library(stringr)
+library(ggplot2)
+library(latex2exp)
+#install.packages("latex2exp")
 
 # remembering the difference between interpreted and compiled languages:
 # the R Console can receive information in its terminal and immediately spit out
@@ -43,5 +47,40 @@ rm(prod21, prod22, prod23)
 greene <- prod %>% 
   filter(COUNTY == "Greene") %>%
   group_by(PERIOD_ID) %>% 
-  summarize(sum(GAS_QUANTITY, na.rm = TRUE))
+  summarize(sum(GAS_QUANTITY, na.rm = TRUE)) %>%
+  mutate(dt = ym(paste0("20", str_remove(PERIOD_ID, "P$")))) %>%
+  rename(gas = `sum(GAS_QUANTITY, na.rm = TRUE)`) %>%
+  select(dt, gas)
+
+write_csv(greene, "green_ogp_alt.csv") # export as csv file, making usable for people not using R
+
+gg <- ggplot(greene) + 
+  geom_line(aes(dt, gas/1e6)) +
+  xlab("Date") + 
+  ylab(TeX('Gas Quantity ($\\times 10^6 Mcf$)')) + 
+  theme(panel.background = element_rect(fill = "white", color = "black"),
+    axis.text = element_text(face = "plain", size = 14),
+    axis.title = element_text(face = "plain", size = 14)) 
+
+ggsave("GreenCnt_gas_prod.eps", gg, device = "eps")
+
+
+
+
+  
+  
+#variable types:
+  # double -> number
+  # integer -> int
+  # strings -> chr
+  # logic -> true/false
+  # factors = for categorization, property added to an existing variable
+# array = an n-dimensional table
+  #scalar - 0, vector - 1, matrices - 2
+# data frame = an array with additional functionality based on its columns
+# here, greene is a data frame. the command greene$PERIOD_ID[1] opens the data frame,
+# accesses column PERIOD_ID, and returns the value at location 1.
+# [] = defines position, () defines function
+
+
 
